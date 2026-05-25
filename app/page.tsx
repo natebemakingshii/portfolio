@@ -25,12 +25,22 @@ export default function Portfolio() {
   // Form & Upload States
   const [isUploading, setIsUploading] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [title, setTitle] = useState('');
   const [client, setClient] = useState('');
   const [views, setViews] = useState('');
   const [retention, setRetention] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Generate a temporary browser URL for the local file
+      const objectUrl = URL.createObjectURL(file);
+      setLocalPreviewUrl(objectUrl);
+    }
+  };
 
   // Handle Video Upload and Project Creation
   const handleCreateProject = async (e: React.FormEvent) => {
@@ -49,6 +59,8 @@ export default function Portfolio() {
         access: 'public',
         handleUploadUrl: '/api/upload',
       });
+
+      console.log("Jj")
 
       // 2. Append new project object to state array
       const colors = ["bg-[#4DABF7]", "bg-[#51CF66]", "bg-[#FF6B6B]", "bg-[#CCFF00]"];
@@ -85,14 +97,14 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-[#FFF4E6] text-black font-mono p-6 md:p-12 selection:bg-black selection:text-white">
-      
+
       {/* HEADER */}
       <header className="flex justify-between items-center border-4 border-black bg-white p-4 mb-12 shadow-[4px_4px_0px_0px_#000000]">
         <div className="flex items-center gap-2">
           <Film className="w-6 h-6" />
           <span className="font-black text-xl tracking-wider">CUT.BAY // PORTFOLIO</span>
         </div>
-        <button 
+        <button
           onClick={() => setShowAdmin(!showAdmin)}
           className="border-2 border-black px-3 py-1 font-bold bg-[#CCFF00] hover:shadow-[2px_2px_0px_0px_#000000] transition-all flex items-center gap-2 text-sm"
         >
@@ -113,12 +125,37 @@ export default function Portfolio() {
               <input type="text" placeholder="VIEWS (e.g. 1.2M)" value={views} onChange={e => setViews(e.target.value)} required className="border-2 border-black p-2 font-bold focus:bg-amber-50 outline-none" />
               <input type="number" placeholder="RETENTION % (e.g. 84)" value={retention} onChange={e => setRetention(e.target.value)} required className="border-2 border-black p-2 font-bold focus:bg-amber-50 outline-none" />
             </div>
-            <div className="border-2 border-dashed border-black p-4 text-center bg-zinc-50 relative cursor-pointer hover:bg-zinc-100 transition-colors">
-              <input type="file" ref={fileInputRef} accept="video/*" required className="absolute inset-0 opacity-0 cursor-pointer" />
-              <p className="font-black text-sm text-zinc-600">DRAG & DROP OR CLICK TO CHOOSE 9:16 VIDEO FILE</p>
+            <div className="border-2 border-dashed border-black p-4 text-center bg-zinc-50 relative min-h-[200px] flex flex-col items-center justify-center hover:bg-zinc-100 transition-colors overflow-hidden">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="video/*"
+                onChange={handleFileChange} // <-- Fires immediately on file selection
+                required
+                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+              />
+
+              {localPreviewUrl ? (
+                <div className="w-full max-w-[120px] aspect-[9/16] bg-black border-2 border-black shadow-[2px_2px_0px_0px_#000000] relative z-10 pointer-events-none">
+                  <video
+                    src={localPreviewUrl}
+                    muted
+                    autoPlay
+                    loop
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute -bottom-2 -right-2 bg-[#51CF66] text-black border border-black font-black text-[10px] px-1 shadow-[1px_1px_0px_0px_#000000]">
+                    READY
+                  </span>
+                </div>
+              ) : (
+                <p className="font-black text-sm text-zinc-600 pointer-events-none">
+                  DRAG & DROP OR CLICK TO CHOOSE 9:16 VIDEO FILE
+                </p>
+              )}
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isUploading}
               className="w-full border-4 border-black bg-[#FF6B6B] text-white p-3 font-black text-lg shadow-[4px_4px_0px_0px_#000000] disabled:bg-zinc-400 disabled:text-zinc-600 flex justify-center items-center gap-2"
             >
@@ -130,7 +167,7 @@ export default function Portfolio() {
 
       {/* MAIN SYSTEM LAYOUT */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-        
+
         {/* LEFT: THE LIVE MONITOR */}
         <section className="lg:col-span-5 flex justify-center items-center">
           <div className="border-4 border-black bg-black w-full max-w-[360px] aspect-[9/16] shadow-[8px_8px_0px_0px_#000000] relative overflow-hidden group">
@@ -142,13 +179,13 @@ export default function Portfolio() {
 
             {/* Core HTML5 Video Player Engine */}
             <div className="w-full h-full pt-8 bg-zinc-950 flex items-center justify-center">
-              <video 
-                key={activeVideo} 
-                src={activeVideo} 
-                controls 
-                autoPlay 
-                muted 
-                loop 
+              <video
+                key={activeVideo}
+                src={activeVideo}
+                controls
+                autoPlay
+                muted
+                loop
                 className="w-full h-full object-cover"
               />
             </div>
@@ -173,9 +210,9 @@ export default function Portfolio() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-black tracking-widest uppercase text-zinc-600">// COMPLETED MISSIONS</h2>
-            
+
             {projects.map((project) => (
-              <div 
+              <div
                 key={project.id}
                 onClick={() => {
                   setActiveVideo(project.videoUrl);
